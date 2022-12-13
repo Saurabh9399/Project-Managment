@@ -1,18 +1,58 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { useEffect, useState } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import "./App.css";
 import Auth from "./components/Auth/Auth";
 import Home from "./components/Home";
+import Spinner from "./components/Spinner/Spinner";
+import { auth, getUserFromDatabase } from "./firebase";
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userDetails, setUserDetails] = useState({});
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
+
+  const fetchUserDetails = async (uid) => {
+    const userDetails = await getUserFromDatabase(uid);
+    setIsDataLoaded(true);
+    setUserDetails(userDetails);
+  };
+  useEffect(() => {
+    const listner = auth.onAuthStateChanged((user) => {
+      if (!user) {
+        setIsDataLoaded(true);
+        return;
+      }
+      setIsAuthenticated(true);
+
+      fetchUserDetails(user.uid);
+    });
+    return () => listner();
+  }, []);
   return (
     <div className="App">
       <Router>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Auth />} />
-          <Route path="/signup" element={<Auth signup />} />
-          <Route path="/account" element={<h1>Account</h1>} />
-        </Routes>
+        {isDataLoaded ? (
+          <Routes>
+            {!isAuthenticated && (
+              <>
+                <Route path="/login" element={<Auth />} />
+                <Route path="/signup" element={<Auth signup />} />
+              </>
+            )}
+            <Route path="/" element={<Home auth={isAuthenticated} />} />
+            <Route path="/account" element={<h1>Account</h1>} />
+            <Route path="/*" element={<Navigate to="/" />} />
+          </Routes>
+        ) : (
+          <div className="spinner">
+            <Spinner />
+          </div>
+        )}
       </Router>
     </div>
   );

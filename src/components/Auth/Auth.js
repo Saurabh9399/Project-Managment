@@ -1,12 +1,17 @@
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { auth } from "../../firebase";
+import { useNavigate } from "react-router-dom";
+import { auth, updateUserDatabase } from "../../firebase";
 import InputControl from "../InputControl/InputControl";
 import styles from "./Auth.module.css";
 
 const Auth = (props) => {
   const isSignUp = props.signup ? true : false;
+  const navigate = useNavigate();
   const [values, setValues] = useState({
     name: "",
     email: "",
@@ -19,6 +24,17 @@ const Auth = (props) => {
       setErrorMsg("All fields required!");
       return;
     }
+    setSubmitButtonDisabled(true);
+    signInWithEmailAndPassword(auth, values.email, values.password)
+      .then(async (response) => {
+        setSubmitButtonDisabled(false);
+        setErrorMsg("");
+        navigate("/");
+      })
+      .catch((err) => {
+        setSubmitButtonDisabled(false);
+        setErrorMsg(err.message);
+      });
   };
   const handleSignUp = () => {
     if (!values.name || !values.email || !values.password) {
@@ -27,11 +43,15 @@ const Auth = (props) => {
     }
     setSubmitButtonDisabled(true);
     createUserWithEmailAndPassword(auth, values.email, values.password)
-      .then((response) => {
+      .then(async (response) => {
+        const userId = response.user.uid;
+        await updateUserDatabase(
+          { name: values.name, email: values.email },
+          userId
+        );
         setSubmitButtonDisabled(false);
         setErrorMsg("");
-        const userId = response.user.uid;
-        console.log("response", response);
+        navigate("/");
       })
       .catch((err) => {
         setSubmitButtonDisabled(false);

@@ -4,10 +4,15 @@ import { useNavigate } from "react-router-dom";
 import styleIcon from "../assets/projectremovedbg.png";
 import { ArrowRight } from "react-feather";
 
-const Home = () => {
+const Home = (props) => {
   const navigate = useNavigate();
+  const isAuthenticated = props.auth ? true : false;
   const handleNextButtonClick = () => {
-    navigate("/login");
+    if (isAuthenticated) {
+      navigate("/account");
+    } else {
+      navigate("/login");
+    }
   };
   return (
     <div className={styles.container}>
@@ -18,7 +23,7 @@ const Home = () => {
             One stop destination for all the software development projects.
           </p>
           <button onClick={handleNextButtonClick}>
-            Get Started
+            {isAuthenticated ? "Manage your Projects" : "Get Started"}
             <ArrowRight />
           </button>
         </div>
