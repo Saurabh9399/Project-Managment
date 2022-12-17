@@ -6,6 +6,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import "./App.css";
+import Account from "./components/Account/Account";
 import Auth from "./components/Auth/Auth";
 import Home from "./components/Home";
 import Spinner from "./components/Spinner/Spinner";
@@ -18,6 +19,7 @@ function App() {
 
   const fetchUserDetails = async (uid) => {
     const userDetails = await getUserFromDatabase(uid);
+    console.log("user", userDetails);
     setIsDataLoaded(true);
     setUserDetails(userDetails);
   };
@@ -25,10 +27,11 @@ function App() {
     const listner = auth.onAuthStateChanged((user) => {
       if (!user) {
         setIsDataLoaded(true);
+        setIsAuthenticated(false);
         return;
       }
       setIsAuthenticated(true);
-
+      console.log(user.uid);
       fetchUserDetails(user.uid);
     });
     return () => listner();
@@ -45,7 +48,12 @@ function App() {
               </>
             )}
             <Route path="/" element={<Home auth={isAuthenticated} />} />
-            <Route path="/account" element={<h1>Account</h1>} />
+            <Route
+              path="/account"
+              element={
+                <Account userDetails={userDetails} auth={isAuthenticated} />
+              }
+            />
             <Route path="/*" element={<Navigate to="/" />} />
           </Routes>
         ) : (
